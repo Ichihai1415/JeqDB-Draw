@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.33414.496
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JeqDB-Draw", "JeqDB-Draw\JeqDB-Draw.csproj", "{0C19DCB4-4F30-4001-802B-9FFA443F17DE}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0C19DCB4-4F30-4001-802B-9FFA443F17DE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0C19DCB4-4F30-4001-802B-9FFA443F17DE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0C19DCB4-4F30-4001-802B-9FFA443F17DE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0C19DCB4-4F30-4001-802B-9FFA443F17DE}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E57FEFE6-C6EF-42A6-A1CC-E0D447BE9416}
+	EndGlobalSection
+EndGlobal
