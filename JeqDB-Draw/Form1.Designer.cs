@@ -28,34 +28,57 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.pictureBox1 = new System.Windows.Forms.PictureBox();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
+            this.components = new System.ComponentModel.Container();
+            this.MapImg = new System.Windows.Forms.PictureBox();
+            this.RC = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.RC_Draw = new System.Windows.Forms.ToolStripMenuItem();
+            ((System.ComponentModel.ISupportInitialize)(this.MapImg)).BeginInit();
+            this.RC.SuspendLayout();
             this.SuspendLayout();
             // 
-            // pictureBox1
+            // MapImg
             // 
-            this.pictureBox1.Location = new System.Drawing.Point(0, 0);
-            this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(500, 500);
-            this.pictureBox1.TabIndex = 0;
-            this.pictureBox1.TabStop = false;
+            this.MapImg.Location = new System.Drawing.Point(0, 0);
+            this.MapImg.Name = "MapImg";
+            this.MapImg.Size = new System.Drawing.Size(500, 500);
+            this.MapImg.TabIndex = 0;
+            this.MapImg.TabStop = false;
+            // 
+            // RC
+            // 
+            this.RC.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.RC_Draw});
+            this.RC.Name = "ContextMenuStrip";
+            this.RC.Size = new System.Drawing.Size(99, 26);
+            // 
+            // RC_Draw
+            // 
+            this.RC_Draw.Name = "RC_Draw";
+            this.RC_Draw.Size = new System.Drawing.Size(180, 22);
+            this.RC_Draw.Text = "描画";
+            this.RC_Draw.Click += new System.EventHandler(this.RC_Draw_Click);
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(500, 500);
-            this.Controls.Add(this.pictureBox1);
+            this.ContextMenuStrip = this.RC;
+            this.Controls.Add(this.MapImg);
             this.Name = "Form1";
             this.Text = "JeqDB-Draw";
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
+            this.Load += new System.EventHandler(this.Form1_Load);
+            ((System.ComponentModel.ISupportInitialize)(this.MapImg)).EndInit();
+            this.RC.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
 
         #endregion
 
-        private System.Windows.Forms.PictureBox pictureBox1;
+        private System.Windows.Forms.PictureBox MapImg;
+        private System.Windows.Forms.ContextMenuStrip RC;
+        private System.Windows.Forms.ToolStripMenuItem RC_Draw;
     }
 }
 
