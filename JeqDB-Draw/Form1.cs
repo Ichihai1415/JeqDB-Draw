@@ -44,7 +44,7 @@ namespace JeqDB_Draw
             Graphics g = Graphics.FromImage(bitmap);
             foreach (Data data in dataList)
             {
-                g.FillEllipse(new SolidBrush(Color.FromArgb(255, 0, 0)), (int)((data.Lon - LonSta) * ZoomW), (int)((LatEnd - data.Lat) * ZoomH), 5,5);
+                g.FillEllipse(new SolidBrush(Color.FromArgb(255, 0, 0)), (int)((data.Lon - LonSta) * ZoomW) - 2, (int)((LatEnd - data.Lat) * ZoomH) - 2, 5, 5);
 
 
 
@@ -79,11 +79,11 @@ namespace JeqDB_Draw
                 string[] HypoLats = data__[3].Split('°');
                 double HypoLat = -1;
                 if (data__[3] != "不明")
-                    HypoLat = double.Parse(HypoLats[0]) + double.Parse(HypoLats[1].Substring(0, 3))/60;
+                    HypoLat = double.Parse(HypoLats[0]) + double.Parse(HypoLats[1].Substring(0, 3)) / 60;
                 string[] HypoLons = data__[4].Split('°');
                 double HypoLon = -1;
                 if (data__[4] != "不明")
-                    HypoLon = double.Parse(HypoLons[0]) + double.Parse(HypoLons[1].Substring(0, 4))/60;
+                    HypoLon = double.Parse(HypoLons[0]) + double.Parse(HypoLons[1].Substring(0, 4)) / 60;
                 Data datas = new Data()
                 {
                     Time = DateTime.Parse(data__[0] + " " + data__[1]),
