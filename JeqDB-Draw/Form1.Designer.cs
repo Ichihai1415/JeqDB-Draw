@@ -38,14 +38,17 @@
             // 
             // MapImg
             // 
+            this.MapImg.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
             this.MapImg.Location = new System.Drawing.Point(0, 0);
             this.MapImg.Name = "MapImg";
             this.MapImg.Size = new System.Drawing.Size(500, 500);
             this.MapImg.TabIndex = 0;
             this.MapImg.TabStop = false;
+            this.MapImg.Click += new System.EventHandler(this.MapImg_Click);
             // 
             // RC
             // 
+            this.RC.ImageScalingSize = new System.Drawing.Size(20, 20);
             this.RC.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.RC_Draw});
             this.RC.Name = "ContextMenuStrip";
@@ -54,7 +57,7 @@
             // RC_Draw
             // 
             this.RC_Draw.Name = "RC_Draw";
-            this.RC_Draw.Size = new System.Drawing.Size(180, 22);
+            this.RC_Draw.Size = new System.Drawing.Size(98, 22);
             this.RC_Draw.Text = "描画";
             this.RC_Draw.Click += new System.EventHandler(this.RC_Draw_Click);
             // 

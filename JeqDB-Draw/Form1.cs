@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
@@ -15,12 +16,12 @@ namespace JeqDB_Draw
         {
             InitializeComponent();
         }
-        Bitmap canvas = new Bitmap(500, 500);
+        Bitmap canvas = new Bitmap(1000, 1000);
         List<Data> dataList = new List<Data>();
-        double LatEnd = 50;
+        double LatEnd = 48;
         double LonSta = 125;
-        double ZoomW = 20;
-        double ZoomH = 20;
+        double ZoomW = 40;
+        double ZoomH = 40;
 
         private void Form1_Load(object sender, EventArgs e)
         {
@@ -39,21 +40,77 @@ namespace JeqDB_Draw
             Console.WriteLine("データ個数:" + dataList.Count);
             Console.WriteLine("情報描画開始");
 
-            Bitmap bitmap = new Bitmap(500, 500);
-            bitmap = canvas;
+            Bitmap bitmap = canvas;
             Graphics g = Graphics.FromImage(bitmap);
             foreach (Data data in dataList)
             {
-                g.FillEllipse(new SolidBrush(Color.FromArgb(255, 0, 0)), (int)((data.Lon - LonSta) * ZoomW) - 2, (int)((LatEnd - data.Lat) * ZoomH) - 2, 5, 5);
+                int size = (int)(data.Mag * data.Mag);//(int)(data.Mag * 8);
+                if (data.Mag < 7)
+                    continue;
+                g.FillEllipse(Depth2Color(data.Depth), (int)((data.Lon - LonSta) * ZoomW) - size / 2, (int)((LatEnd - data.Lat) * ZoomH) - size / 2, size, size);
+                g.DrawEllipse(Pens.Black, (int)((data.Lon - LonSta) * ZoomW) - size / 2, (int)((LatEnd - data.Lat) * ZoomH) - size / 2, size, size);
 
 
 
             }
-            MapImg.Image = bitmap;
+            MapImg.BackgroundImage = bitmap;
             g.Dispose();
             Console.WriteLine("情報描画終了");
+            bitmap.Save("output.png",ImageFormat.Png);
 
-
+        }
+        private SolidBrush Depth2Color(int Depth)
+        {
+            int r, g, b;
+            if (Depth <= 10)
+            {
+                r = Depth * 12 + 130;
+                g = 0;
+                b = 0;
+            }
+            else if (Depth <= 20)
+            {
+                r = 255;
+                g = (int)((Depth - 10) * 12.5);
+                b = 0;
+            }
+            else if (Depth <= 30)
+            {
+                r = 255;
+                g = (int)((Depth - 10) * 12.5);
+                b = 0;
+            }
+            else if (Depth <= 50)
+            {
+                r = 255;
+                g = 255;
+                b = 0;
+            }
+            else if (Depth <= 100)
+            {
+                r = 255 - (Depth - 50) * 5;
+                g = (int)(255 - (Depth - 50) * 2.5);
+                b = 0;
+            }
+            else if (Depth <= 200)
+            {
+                r = 7 + (Depth - 100) / 4;
+                g = 130 + (Depth - 100) / 10;
+                b = (int)((Depth - 100) * 2.5);
+            }
+            else if (Depth <= 700)
+            {
+                r = 31 - (Depth - 200) / 16;
+                g = 140 - (Depth - 200) / 4;
+                b = 255 - (Depth - 200) / 4;
+            }
+            else
+            {
+                r = 0;
+                g = 0;
+                b = 0;
+            }
+            return new SolidBrush(Color.FromArgb(30, r, g, b));
         }
         private void ConvertData()
         {
@@ -100,7 +157,6 @@ namespace JeqDB_Draw
         private void DrawMap()
         {
             JObject json = JObject.Parse(File.ReadAllText("Map-jp.geojson"));
-            canvas = new Bitmap(MapImg.Width, MapImg.Height);
             Graphics g = Graphics.FromImage(canvas);
             g.Clear(Color.FromArgb(120, 120, 255));
             GraphicsPath Maps = new GraphicsPath();
@@ -130,7 +186,12 @@ namespace JeqDB_Draw
             g.FillPath(new SolidBrush(Color.FromArgb(150, 150, 150)), Maps);
             g.DrawPath(new Pen(Color.FromArgb(255, 255, 255), 1), Maps);
             g.Dispose();
-            MapImg.Image = canvas;
+            MapImg.BackgroundImage = canvas;
+        }
+
+        private void MapImg_Click(object sender, EventArgs e)
+        {
+            //RC_Draw_Click(sender,e);
         }
     }
     public class Data
