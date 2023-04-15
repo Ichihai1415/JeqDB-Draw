@@ -16,15 +16,30 @@ namespace JeqDB_Draw
         {
             InitializeComponent();
         }
-        Bitmap canvas = new Bitmap(1000, 1000);
+        Bitmap canvas = new Bitmap(1080, 1080);
         List<Data> dataList = new List<Data>();
-        double LatEnd = 48;
-        double LonSta = 125;
-        double ZoomW = 40;
-        double ZoomH = 40;
+        double LatSta = 20;
+        double LatEnd = 50;
+        double LonSta = 120; 
+        double LonEnd = 150;
+        double ZoomW = 36;
+        double ZoomH = 36;
+        int a = 204;
 
         private void Form1_Load(object sender, EventArgs e)
         {
+            canvas = new Bitmap(2160, 2160);
+            ZoomW = canvas.Width / (LonEnd - LonSta);
+            ZoomH = canvas.Height / (LatEnd - LatSta);
+            Console.WriteLine("画像サイズ:" + canvas.Size.Width + "," + canvas.Size.Width);
+            Console.WriteLine("緯度始点:" + LatSta);
+            Console.WriteLine("緯度終点:" + LatEnd);
+            Console.WriteLine("経度始点:" + LonSta);
+            Console.WriteLine("経度終点:" + LonEnd);
+            Console.WriteLine("横ズーム:" + ZoomW);
+            Console.WriteLine("縦ズーム:" + ZoomH);
+            Console.WriteLine("透明度:" + a);
+
             Console.WriteLine("マップ描画開始");
             DrawMap();
             Console.WriteLine("マップ描画終了");
@@ -44,14 +59,10 @@ namespace JeqDB_Draw
             Graphics g = Graphics.FromImage(bitmap);
             foreach (Data data in dataList)
             {
-                int size = (int)(data.Mag * data.Mag);//(int)(data.Mag * 8);
-                if (data.Mag < 7)
-                    continue;
+                //int size = (int)(data.Mag * data.Mag * canvas.Width / 1000);
+                int size = (int)(data.Mag * canvas.Width / 200);
                 g.FillEllipse(Depth2Color(data.Depth), (int)((data.Lon - LonSta) * ZoomW) - size / 2, (int)((LatEnd - data.Lat) * ZoomH) - size / 2, size, size);
-                g.DrawEllipse(Pens.Black, (int)((data.Lon - LonSta) * ZoomW) - size / 2, (int)((LatEnd - data.Lat) * ZoomH) - size / 2, size, size);
-
-
-
+                g.DrawEllipse(Pens.Gray, (int)((data.Lon - LonSta) * ZoomW) - size / 2, (int)((LatEnd - data.Lat) * ZoomH) - size / 2, size, size);
             }
             MapImg.BackgroundImage = bitmap;
             g.Dispose();
@@ -110,7 +121,7 @@ namespace JeqDB_Draw
                 g = 0;
                 b = 0;
             }
-            return new SolidBrush(Color.FromArgb(30, r, g, b));
+            return new SolidBrush(Color.FromArgb(a, r, g, b));
         }
         private void ConvertData()
         {
@@ -156,24 +167,25 @@ namespace JeqDB_Draw
         }
         private void DrawMap()
         {
-            JObject json = JObject.Parse(File.ReadAllText("Map-jp.geojson"));
+            //JObject json = JObject.Parse(File.ReadAllText("Map-jp.geojson"));
+            JObject json = JObject.Parse(File.ReadAllText("Map-world.geojson").Replace("geometries", "features"));
             Graphics g = Graphics.FromImage(canvas);
             g.Clear(Color.FromArgb(120, 120, 255));
             GraphicsPath Maps = new GraphicsPath();
             Maps.StartFigure();
             foreach (JToken json_1 in json.SelectToken("features"))
             {
-                if ((string)json_1.SelectToken("geometry.type") == "Polygon")
+                if ((string)json_1.SelectToken("type") == "Polygon")//geometry.
                 {
                     List<Point> points = new List<Point>();
-                    foreach (JToken json_2 in json_1.SelectToken($"geometry.coordinates[0]"))
+                    foreach (JToken json_2 in json_1.SelectToken($"coordinates[0]"))//geometry.
                         points.Add(new Point((int)(((double)json_2.SelectToken("[0]") - LonSta) * ZoomW), (int)((LatEnd - (double)json_2.SelectToken("[1]")) * ZoomH)));
                     if (points.Count > 2)
                         Maps.AddPolygon(points.ToArray());
                 }
                 else
                 {
-                    foreach (JToken json_2 in json_1.SelectToken($"geometry.coordinates"))
+                    foreach (JToken json_2 in json_1.SelectToken($"coordinates"))//geometry.
                     {
                         List<Point> points = new List<Point>();
                         foreach (JToken json_3 in json_2.SelectToken("[0]"))
