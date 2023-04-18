@@ -32,6 +32,7 @@
             this.MapImg = new System.Windows.Forms.PictureBox();
             this.RC = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.RC_Draw = new System.Windows.Forms.ToolStripMenuItem();
+            this.RC_output = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.MapImg)).BeginInit();
             this.RC.SuspendLayout();
             this.SuspendLayout();
@@ -40,8 +41,9 @@
             // 
             this.MapImg.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
             this.MapImg.Location = new System.Drawing.Point(0, 0);
+            this.MapImg.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.MapImg.Name = "MapImg";
-            this.MapImg.Size = new System.Drawing.Size(500, 500);
+            this.MapImg.Size = new System.Drawing.Size(667, 625);
             this.MapImg.TabIndex = 0;
             this.MapImg.TabStop = false;
             this.MapImg.Click += new System.EventHandler(this.MapImg_Click);
@@ -50,24 +52,33 @@
             // 
             this.RC.ImageScalingSize = new System.Drawing.Size(20, 20);
             this.RC.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.RC_Draw});
+            this.RC_Draw,
+            this.RC_output});
             this.RC.Name = "ContextMenuStrip";
-            this.RC.Size = new System.Drawing.Size(99, 26);
+            this.RC.Size = new System.Drawing.Size(211, 80);
             // 
             // RC_Draw
             // 
             this.RC_Draw.Name = "RC_Draw";
-            this.RC_Draw.Size = new System.Drawing.Size(98, 22);
+            this.RC_Draw.Size = new System.Drawing.Size(210, 24);
             this.RC_Draw.Text = "描画";
             this.RC_Draw.Click += new System.EventHandler(this.RC_Draw_Click);
             // 
+            // RC_output
+            // 
+            this.RC_output.Name = "RC_output";
+            this.RC_output.Size = new System.Drawing.Size(210, 24);
+            this.RC_output.Text = "動画出力";
+            this.RC_output.Click += new System.EventHandler(this.RC_output_Click);
+            // 
             // Form1
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(500, 500);
+            this.ClientSize = new System.Drawing.Size(667, 625);
             this.ContextMenuStrip = this.RC;
             this.Controls.Add(this.MapImg);
+            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.Name = "Form1";
             this.Text = "JeqDB-Draw";
             this.Load += new System.EventHandler(this.Form1_Load);
@@ -82,6 +93,7 @@
         private System.Windows.Forms.PictureBox MapImg;
         private System.Windows.Forms.ContextMenuStrip RC;
         private System.Windows.Forms.ToolStripMenuItem RC_Draw;
+        private System.Windows.Forms.ToolStripMenuItem RC_output;
     }
 }
 

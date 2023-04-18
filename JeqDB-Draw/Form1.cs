@@ -6,6 +6,7 @@ using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Windows.Forms;
 
 namespace JeqDB_Draw
@@ -20,7 +21,7 @@ namespace JeqDB_Draw
         List<Data> dataList = new List<Data>();
         double LatSta = 20;
         double LatEnd = 50;
-        double LonSta = 120; 
+        double LonSta = 120;
         double LonEnd = 150;
         double ZoomW = 36;
         double ZoomH = 36;
@@ -55,7 +56,7 @@ namespace JeqDB_Draw
             Console.WriteLine("データ個数:" + dataList.Count);
             Console.WriteLine("情報描画開始");
 
-            Bitmap bitmap = canvas;
+            Bitmap bitmap = (Bitmap)canvas.Clone();
             Graphics g = Graphics.FromImage(bitmap);
             foreach (Data data in dataList)
             {
@@ -67,7 +68,7 @@ namespace JeqDB_Draw
             MapImg.BackgroundImage = bitmap;
             g.Dispose();
             Console.WriteLine("情報描画終了");
-            bitmap.Save("output.png",ImageFormat.Png);
+            bitmap.Save("output.png", ImageFormat.Png);
 
         }
         private SolidBrush Depth2Color(int Depth)
@@ -204,6 +205,48 @@ namespace JeqDB_Draw
         private void MapImg_Click(object sender, EventArgs e)
         {
             //RC_Draw_Click(sender,e);
+        }
+
+        private void RC_output_Click(object sender, EventArgs e)
+        {
+            ConvertData();
+
+            List<Data> dataList_ = dataList;
+            Console.WriteLine("ソート開始");
+            dataList_.Sort((a, b) => a.Time.CompareTo(b.Time));
+            Console.WriteLine("ソート終了");
+
+            string SaveLoc = "output\\1";
+            DateTime DrawStartDate = new DateTime(2022, 1, 1);
+            DateTime DrawTime = DrawStartDate;
+            TimeSpan DrawSpan = new TimeSpan(24, 0, 0);
+            int i = 1;
+            while (dataList_.Count != 0)
+            {
+                List<Data> dataList__ = new List<Data>();
+                while (dataList_[0].Time < DrawTime + DrawSpan)
+                {
+                    dataList__.Add(dataList_[0]);
+                    dataList_.RemoveAt(0);
+                    if (dataList_.Count == 0)
+                        break;
+                }
+                Bitmap bitmap = (Bitmap)canvas.Clone();
+                Graphics g = Graphics.FromImage(bitmap);
+                foreach (Data data in dataList__)
+                {
+                    //int size = (int)(data.Mag * data.Mag * canvas.Width / 1000);
+                    int size = (int)(data.Mag * canvas.Width / 200);
+                    g.FillEllipse(Depth2Color(data.Depth), (int)((data.Lon - LonSta) * ZoomW) - size / 2, (int)((LatEnd - data.Lat) * ZoomH) - size / 2, size, size);
+                    g.DrawEllipse(Pens.Gray, (int)((data.Lon - LonSta) * ZoomW) - size / 2, (int)((LatEnd - data.Lat) * ZoomH) - size / 2, size, size);
+                }
+                bitmap.Save($"{SaveLoc}\\{string.Format("{0:D4}", i)}.png", ImageFormat.Png);
+                g.Dispose();
+                //Thread.Sleep(1000);
+                Console.WriteLine($"{DrawTime}({i}):{dataList__.Count}");
+                i++;
+                DrawTime += DrawSpan;
+            }//ffmpeg -framerate 30 -i %04d.png -vcodec libx264 -pix_fmt yuv420p -r 30 _output.mp4
         }
     }
     public class Data
