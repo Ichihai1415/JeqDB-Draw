@@ -6,7 +6,6 @@ using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
-using System.Threading;
 using System.Windows.Forms;
 
 namespace JeqDB_Draw
@@ -60,8 +59,8 @@ namespace JeqDB_Draw
             Graphics g = Graphics.FromImage(bitmap);
             foreach (Data data in dataList)
             {
-                //int size = (int)(data.Mag * data.Mag * canvas.Width / 1000);
-                int size = (int)(data.Mag * canvas.Width / 200);
+                int size = (int)(data.Mag * data.Mag * canvas.Width / 1080);
+                //int size = (int)(data.Mag * canvas.Width / 200);
                 g.FillEllipse(Depth2Color(data.Depth), (int)((data.Lon - LonSta) * ZoomW) - size / 2, (int)((LatEnd - data.Lat) * ZoomH) - size / 2, size, size);
                 g.DrawEllipse(Pens.Gray, (int)((data.Lon - LonSta) * ZoomW) - size / 2, (int)((LatEnd - data.Lat) * ZoomH) - size / 2, size, size);
             }
@@ -71,7 +70,7 @@ namespace JeqDB_Draw
             bitmap.Save("output.png", ImageFormat.Png);
 
         }
-        private SolidBrush Depth2Color(int Depth)
+        private SolidBrush Depth2Color(int Depth, int alpha = 255)
         {
             int r, g, b;
             if (Depth <= 10)
@@ -122,7 +121,7 @@ namespace JeqDB_Draw
                 g = 0;
                 b = 0;
             }
-            return new SolidBrush(Color.FromArgb(a, r, g, b));
+            return new SolidBrush(Color.FromArgb(alpha, r, g, b));
         }
         private void ConvertData()
         {
@@ -168,25 +167,39 @@ namespace JeqDB_Draw
         }
         private void DrawMap()
         {
-            //JObject json = JObject.Parse(File.ReadAllText("Map-jp.geojson"));
-            JObject json = JObject.Parse(File.ReadAllText("Map-world.geojson").Replace("geometries", "features"));
+            JObject json = JObject.Parse(File.ReadAllText("Map-world.geojson"));
             Graphics g = Graphics.FromImage(canvas);
-            g.Clear(Color.FromArgb(120, 120, 255));
+            g.Clear(Color.FromArgb(30, 30, 60));
             GraphicsPath Maps = new GraphicsPath();
             Maps.StartFigure();
             foreach (JToken json_1 in json.SelectToken("features"))
             {
-                if ((string)json_1.SelectToken("type") == "Polygon")//geometry.
+                if (json_1.SelectToken("geometry").Count() == 0)
+                    continue;
+                List<Point> points = new List<Point>();
+                foreach (JToken json_2 in json_1.SelectToken($"geometry.coordinates[0]"))
+                    points.Add(new Point((int)(((double)json_2.SelectToken("[0]") - LonSta) * ZoomW), (int)((LatEnd - (double)json_2.SelectToken("[1]")) * ZoomH)));
+                if (points.Count > 2)
+                    Maps.AddPolygon(points.ToArray());
+            }
+            g.FillPath(new SolidBrush(Color.FromArgb(100, 100, 150)), Maps);
+
+            json = JObject.Parse(File.ReadAllText("Map-jp.geojson"));
+            Maps.Reset();
+            Maps.StartFigure();
+            foreach (JToken json_1 in json.SelectToken("features"))
+            {
+                if ((string)json_1.SelectToken("geometry.type") == "Polygon")
                 {
                     List<Point> points = new List<Point>();
-                    foreach (JToken json_2 in json_1.SelectToken($"coordinates[0]"))//geometry.
+                    foreach (JToken json_2 in json_1.SelectToken($"geometry.coordinates[0]"))
                         points.Add(new Point((int)(((double)json_2.SelectToken("[0]") - LonSta) * ZoomW), (int)((LatEnd - (double)json_2.SelectToken("[1]")) * ZoomH)));
                     if (points.Count > 2)
                         Maps.AddPolygon(points.ToArray());
                 }
                 else
                 {
-                    foreach (JToken json_2 in json_1.SelectToken($"coordinates"))//geometry.
+                    foreach (JToken json_2 in json_1.SelectToken($"geometry.coordinates"))
                     {
                         List<Point> points = new List<Point>();
                         foreach (JToken json_3 in json_2.SelectToken("[0]"))
@@ -196,8 +209,12 @@ namespace JeqDB_Draw
                     }
                 }
             }
-            g.FillPath(new SolidBrush(Color.FromArgb(150, 150, 150)), Maps);
+            g.FillPath(new SolidBrush(Color.FromArgb(90, 90, 120)), Maps);
             g.DrawPath(new Pen(Color.FromArgb(255, 255, 255), 1), Maps);
+
+
+
+
             g.Dispose();
             MapImg.BackgroundImage = canvas;
         }
@@ -211,40 +228,64 @@ namespace JeqDB_Draw
         {
             ConvertData();
 
-            List<Data> dataList_ = dataList;
+            List<Data> dataList_ = new List<Data>(dataList);
             Console.WriteLine("ソート開始");
             dataList_.Sort((a, b) => a.Time.CompareTo(b.Time));
             Console.WriteLine("ソート終了");
 
-            string SaveLoc = "output\\1";
+            string SaveDire = "3";
+            if (!Directory.Exists("output"))
+                Directory.CreateDirectory("output");
+            if (!Directory.Exists("output\\" + SaveDire))
+                Directory.CreateDirectory("output" + SaveDire);
             DateTime DrawStartDate = new DateTime(2022, 1, 1);
-            DateTime DrawTime = DrawStartDate;
-            TimeSpan DrawSpan = new TimeSpan(24, 0, 0);
-            int i = 1;
-            while (dataList_.Count != 0)
+            DateTime DrawEndDate = new DateTime(2023, 1, 1);
+            TimeSpan DrawSpan = new TimeSpan(6, 0, 0);//tごとに描画
+            TimeSpan DisappSpan = new TimeSpan(24, 0, 0);//消える時間
+            //      | transDraw |  normalDraw |
+            //      |           |             |
+            //      |           |             |
+            //------|-----------|-------------|----------
+            //  disAppTime  drawTimeSta  drawTimeEnd
+            //
+            //disAppTime = DrawTime + DrawSpan - DisappSpan
+            //drawTimeSta = DrawTime
+            //drawTimeEnd = DrawTime + DrawSpan
+            DateTime DrawTime = DrawStartDate;//描画対象時間
+            for (int i = 1; DrawTime < DrawEndDate; i++)
             {
                 List<Data> dataList__ = new List<Data>();
-                while (dataList_[0].Time < DrawTime + DrawSpan)
+                List<Data> dataList_cp = new List<Data>(dataList_);
+                foreach (Data data in dataList_cp)//古<新==true
                 {
-                    dataList__.Add(dataList_[0]);
-                    dataList_.RemoveAt(0);
-                    if (dataList_.Count == 0)
+                    if (data.Time < DrawTime + DrawSpan - DisappSpan)//描画終了
+                        dataList_.RemoveAt(0);
+                    else if (data.Time < DrawTime + DrawSpan)//描画
+                        dataList__.Add(data);
+                    else//未描画
                         break;
                 }
                 Bitmap bitmap = (Bitmap)canvas.Clone();
                 Graphics g = Graphics.FromImage(bitmap);
                 foreach (Data data in dataList__)
                 {
-                    //int size = (int)(data.Mag * data.Mag * canvas.Width / 1000);
-                    int size = (int)(data.Mag * canvas.Width / 200);
-                    g.FillEllipse(Depth2Color(data.Depth), (int)((data.Lon - LonSta) * ZoomW) - size / 2, (int)((LatEnd - data.Lat) * ZoomH) - size / 2, size, size);
+                    int size = (int)(data.Mag * data.Mag * canvas.Width / 1080);
+                    //int size = (int)(data.Mag * canvas.Width / 200);
+                    int alpha;
+
+                    if (dataList_[0].Time < DrawTime + DrawSpan + DrawSpan)
+                        alpha = 204;
+                    else if (dataList_[0].Time < DrawTime + DrawSpan)
+                        alpha = 136;
+                    else
+                        alpha = 68;
+                    g.FillEllipse(Depth2Color(data.Depth, alpha), (int)((data.Lon - LonSta) * ZoomW) - size / 2, (int)((LatEnd - data.Lat) * ZoomH) - size / 2, size, size);
                     g.DrawEllipse(Pens.Gray, (int)((data.Lon - LonSta) * ZoomW) - size / 2, (int)((LatEnd - data.Lat) * ZoomH) - size / 2, size, size);
                 }
-                bitmap.Save($"{SaveLoc}\\{string.Format("{0:D4}", i)}.png", ImageFormat.Png);
+                g.DrawString(DrawTime.ToString("yyyy/MM/dd HH:mm:ss"), new Font("Roboto", 100), Brushes.Black, 0, 0);
+                bitmap.Save($"output\\{SaveDire}\\{string.Format("{0:D4}", i)}.png", ImageFormat.Png);
                 g.Dispose();
-                //Thread.Sleep(1000);
                 Console.WriteLine($"{DrawTime}({i}):{dataList__.Count}");
-                i++;
                 DrawTime += DrawSpan;
             }//ffmpeg -framerate 30 -i %04d.png -vcodec libx264 -pix_fmt yuv420p -r 30 _output.mp4
         }
