@@ -227,67 +227,60 @@ namespace JeqDB_Draw
         private void RC_output_Click(object sender, EventArgs e)
         {
             ConvertData();
-
             List<Data> dataList_ = new List<Data>(dataList);
             Console.WriteLine("ソート開始");
-            dataList_.Sort((a, b) => a.Time.CompareTo(b.Time));
+            dataList_.Sort((a, b) => a.Time.CompareTo(b.Time));//古い順
             Console.WriteLine("ソート終了");
-
             string SaveDire = "3";
             if (!Directory.Exists("output"))
                 Directory.CreateDirectory("output");
-            if (!Directory.Exists("output\\" + SaveDire))
-                Directory.CreateDirectory("output" + SaveDire);
-            DateTime DrawStartDate = new DateTime(2022, 1, 1);
-            DateTime DrawEndDate = new DateTime(2023, 1, 1);
+            if (!Directory.Exists($"output\\{SaveDire}"))
+                Directory.CreateDirectory($"output\\{SaveDire}");
+            DateTime DrawStartDate = new DateTime(2022, 1, 1);//描画開始
+            DateTime DrawEndDate = new DateTime(2023, 1, 1);//描画終了
             TimeSpan DrawSpan = new TimeSpan(6, 0, 0);//tごとに描画
             TimeSpan DisappSpan = new TimeSpan(24, 0, 0);//消える時間
-            //      | transDraw |  normalDraw |
-            //      |           |             |
-            //      |           |             |
-            //------|-----------|-------------|----------
-            //  disAppTime  drawTimeSta  drawTimeEnd
             //
-            //disAppTime = DrawTime + DrawSpan - DisappSpan
-            //drawTimeSta = DrawTime
-            //drawTimeEnd = DrawTime + DrawSpan
+            //        | DisappSpan|  DrawSpan   |
+            // noDraw | transDraw | normalDraw  | noDraw
+            // -------|-----------|-------------|----------
+            //    disAppTime  drawTimeSta  drawTimeEnd
+            //
             DateTime DrawTime = DrawStartDate;//描画対象時間
-            for (int i = 1; DrawTime < DrawEndDate; i++)
+            Console.WriteLine("画像作成開始");
+            for (int i = 1; DrawTime < DrawEndDate; i++)//DateTime:古<新==true
             {
-                List<Data> dataList__ = new List<Data>();
-                List<Data> dataList_cp = new List<Data>(dataList_);
-                foreach (Data data in dataList_cp)//古<新==true
+                List<Data> dataList_Draw = new List<Data>();
+                List<Data> dataList_Copy = new List<Data>(dataList_);
+                foreach (Data data in dataList_Copy)
                 {
-                    if (data.Time < DrawTime + DrawSpan - DisappSpan)//描画終了
+                    if (data.Time < DrawTime - DisappSpan)//描画終了
                         dataList_.RemoveAt(0);
                     else if (data.Time < DrawTime + DrawSpan)//描画
-                        dataList__.Add(data);
+                        dataList_Draw.Add(data);
                     else//未描画
                         break;
                 }
                 Bitmap bitmap = (Bitmap)canvas.Clone();
                 Graphics g = Graphics.FromImage(bitmap);
-                foreach (Data data in dataList__)
+                foreach (Data data in dataList_Draw)
                 {
                     int size = (int)(data.Mag * data.Mag * canvas.Width / 1080);
                     //int size = (int)(data.Mag * canvas.Width / 200);
-                    int alpha;
-
-                    if (dataList_[0].Time < DrawTime + DrawSpan + DrawSpan)
-                        alpha = 204;
-                    else if (dataList_[0].Time < DrawTime + DrawSpan)
-                        alpha = 136;
-                    else
-                        alpha = 68;
+                    int alpha = a;
+                    if (data.Time < DrawTime)//描画時間より前
+                        alpha = (int)((1.0 - (DrawTime - data.Time).TotalSeconds / DisappSpan.TotalSeconds) * a);//消える時間の割合*基本透明度
                     g.FillEllipse(Depth2Color(data.Depth, alpha), (int)((data.Lon - LonSta) * ZoomW) - size / 2, (int)((LatEnd - data.Lat) * ZoomH) - size / 2, size, size);
                     g.DrawEllipse(Pens.Gray, (int)((data.Lon - LonSta) * ZoomW) - size / 2, (int)((LatEnd - data.Lat) * ZoomH) - size / 2, size, size);
                 }
                 g.DrawString(DrawTime.ToString("yyyy/MM/dd HH:mm:ss"), new Font("Roboto", 100), Brushes.Black, 0, 0);
                 bitmap.Save($"output\\{SaveDire}\\{string.Format("{0:D4}", i)}.png", ImageFormat.Png);
                 g.Dispose();
-                Console.WriteLine($"{DrawTime}({i}):{dataList__.Count}");
+                Console.WriteLine($"{DrawTime.ToString("yyyy/MM/dd HH:mm:ss")}({string.Format("{0:D4}", i)}.png):{dataList_Draw.Count}");
                 DrawTime += DrawSpan;
-            }//ffmpeg -framerate 30 -i %04d.png -vcodec libx264 -pix_fmt yuv420p -r 30 _output.mp4
+            }
+            Console.WriteLine("画像作成終了");
+            Console.WriteLine($"動画化: ffmpeg -framerate 30 -i %04d.png -vcodec libx264 -pix_fmt yuv420p -r 30 _output.mp4");
         }
     }
     public class Data
