@@ -16,22 +16,36 @@ namespace JeqDB_Draw
         {
             InitializeComponent();
         }
-        Bitmap canvas = new Bitmap(1080, 1080);
+        Bitmap BaseMap;
         List<Data> dataList = new List<Data>();
-        double LatSta = 20;
-        double LatEnd = 50;
-        double LonSta = 120;
-        double LonEnd = 150;
-        double ZoomW = 36;
-        double ZoomH = 36;
-        int a = 204;
+
+        //全体
+        readonly double LatSta = 20;
+        readonly double LatEnd = 50;
+        readonly double LonSta = 120;
+        readonly double LonEnd = 150;
+        readonly int MapWidth = 2160;
+        readonly int MapHeight = 2160;
+
+        //能登拡大
+        //readonly double LatSta = 37;
+        //readonly double LatEnd = 38;
+        //readonly double LonSta = 136.8;
+        //readonly double LonEnd = 137.8;
+        //readonly int MapWidth = 1080;
+        //readonly int MapHeight = 1080;
+
+        double ZoomW;
+        double ZoomH;
+        readonly int a = 204;
+        readonly string SaveDire = "7";
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            canvas = new Bitmap(2160, 2160);
-            ZoomW = canvas.Width / (LonEnd - LonSta);
-            ZoomH = canvas.Height / (LatEnd - LatSta);
-            Console.WriteLine("画像サイズ:" + canvas.Size.Width + "," + canvas.Size.Width);
+            BaseMap = new Bitmap(MapHeight * 16 / 9, MapHeight);
+            ZoomW = MapWidth / (LonEnd - LonSta);
+            ZoomH = MapHeight / (LatEnd - LatSta);
+            Console.WriteLine("画像サイズ:" + BaseMap.Size.Width + "," + BaseMap.Size.Height);
             Console.WriteLine("緯度始点:" + LatSta);
             Console.WriteLine("緯度終点:" + LatEnd);
             Console.WriteLine("経度始点:" + LonSta);
@@ -55,12 +69,13 @@ namespace JeqDB_Draw
             Console.WriteLine("データ個数:" + dataList.Count);
             Console.WriteLine("情報描画開始");
 
-            Bitmap bitmap = (Bitmap)canvas.Clone();
+            Bitmap bitmap = (Bitmap)BaseMap.Clone();
             Graphics g = Graphics.FromImage(bitmap);
             foreach (Data data in dataList)
             {
-                int size = (int)(data.Mag * data.Mag * canvas.Width / 1080);
-                //int size = (int)(data.Mag * canvas.Width / 200);
+                //int size = (int)(data.Mag * data.Mag * MapHeight / 1080);
+                int size = (int)(data.Mag * MapHeight / 216);
+                size *= 3;//拡大時仮
                 g.FillEllipse(Depth2Color(data.Depth), (int)((data.Lon - LonSta) * ZoomW) - size / 2, (int)((LatEnd - data.Lat) * ZoomH) - size / 2, size, size);
                 g.DrawEllipse(Pens.Gray, (int)((data.Lon - LonSta) * ZoomW) - size / 2, (int)((LatEnd - data.Lat) * ZoomH) - size / 2, size, size);
             }
@@ -72,6 +87,7 @@ namespace JeqDB_Draw
         }
         private SolidBrush Depth2Color(int Depth, int alpha = 255)
         {
+            /*
             int r, g, b;
             if (Depth <= 10)
             {
@@ -122,6 +138,39 @@ namespace JeqDB_Draw
                 b = 0;
             }
             return new SolidBrush(Color.FromArgb(alpha, r, g, b));
+            */
+            //震度データベースjsより
+            double l = 50;
+            double h = 0;
+            if (Depth <= 10)
+                l = 50 - 25 * ((10 - Depth) / 10);
+            else if (Depth <= 20)
+                h = 0 + 30 * ((Depth - 10) / 10);
+            else if (Depth <= 30)
+                h = 30 + 30 * ((Depth - 20) / 10);
+            else if (Depth <= 50)
+                h = 60;
+            else if (Depth <= 100)
+            {
+                h = 60 + 60 * ((Depth - 50) / 50);
+                l = 50 + 25 * ((50 - Depth) / 100);
+            }
+            else if (Depth <= 200)
+            {
+                h = 120 + 90 * ((Depth - 100) / 100);
+                l = 25 - 30 * ((100 - Depth) / 100);
+            }
+            else if (Depth <= 700)
+            {
+                h = 210 + 30 * ((Depth - 200) / 500);
+                l = 55 + 30 * ((200 - Depth) / 500);
+            }
+            else
+            {
+                h = 240;
+                l = 25;
+            }
+            return new SolidBrush(HSL2RGB(h / 255, 1, l / 100, alpha));
         }
         private void ConvertData()
         {
@@ -130,7 +179,7 @@ namespace JeqDB_Draw
                 try
                 {
                     Console.WriteLine("ファイルパスを入力してください。");
-                    csv = File.ReadAllText(Console.ReadLine());
+                    csv = File.ReadAllText(Console.ReadLine().Replace("\"", ""));
                 }
                 catch (Exception ex)
                 {
@@ -168,7 +217,7 @@ namespace JeqDB_Draw
         private void DrawMap()
         {
             JObject json = JObject.Parse(File.ReadAllText("Map-world.geojson"));
-            Graphics g = Graphics.FromImage(canvas);
+            Graphics g = Graphics.FromImage(BaseMap);
             g.Clear(Color.FromArgb(30, 30, 60));
             GraphicsPath Maps = new GraphicsPath();
             Maps.StartFigure();
@@ -211,12 +260,9 @@ namespace JeqDB_Draw
             }
             g.FillPath(new SolidBrush(Color.FromArgb(90, 90, 120)), Maps);
             g.DrawPath(new Pen(Color.FromArgb(255, 255, 255), 1), Maps);
-
-
-
-
+            g.FillRectangle(new SolidBrush(Color.FromArgb(30, 60, 90)), MapWidth, 0, BaseMap.Width - MapWidth, BaseMap.Height);
             g.Dispose();
-            MapImg.BackgroundImage = canvas;
+            MapImg.BackgroundImage = BaseMap;
         }
 
         private void MapImg_Click(object sender, EventArgs e)
@@ -231,7 +277,6 @@ namespace JeqDB_Draw
             Console.WriteLine("ソート開始");
             dataList_.Sort((a, b) => a.Time.CompareTo(b.Time));//古い順
             Console.WriteLine("ソート終了");
-            string SaveDire = "3";
             if (!Directory.Exists("output"))
                 Directory.CreateDirectory("output");
             if (!Directory.Exists($"output\\{SaveDire}"))
@@ -240,6 +285,19 @@ namespace JeqDB_Draw
             DateTime DrawEndDate = new DateTime(2023, 1, 1);//描画終了
             TimeSpan DrawSpan = new TimeSpan(6, 0, 0);//tごとに描画
             TimeSpan DisappSpan = new TimeSpan(24, 0, 0);//消える時間
+
+            //DrawStartDate = new DateTime(2023, 5, 5, 14, 30, 0);
+            //DrawEndDate = new DateTime(2023, 5, 5, 15, 30, 0);
+            //DrawSpan = new TimeSpan(0, 1, 0);
+            //DisappSpan = new TimeSpan(0, 10, 0);
+
+
+            //能登
+            //DrawStartDate = new DateTime(2023, 5, 5, 14, 0, 0);
+            //DrawEndDate = new DateTime(2023, 5, 6, 2, 0, 0);
+            //DrawSpan = new TimeSpan(0, 1, 0);
+            //DisappSpan = new TimeSpan(0, 15, 0);
+
             //
             //        | DisappSpan|  DrawSpan   |
             // noDraw | transDraw | normalDraw  | noDraw
@@ -261,26 +319,62 @@ namespace JeqDB_Draw
                     else//未描画
                         break;
                 }
-                Bitmap bitmap = (Bitmap)canvas.Clone();
+                Bitmap bitmap = (Bitmap)BaseMap.Clone();
                 Graphics g = Graphics.FromImage(bitmap);
+                string Text = "";
                 foreach (Data data in dataList_Draw)
                 {
-                    int size = (int)(data.Mag * data.Mag * canvas.Width / 1080);
-                    //int size = (int)(data.Mag * canvas.Width / 200);
+                    //int size = (int)(data.Mag * data.Mag * bitmap.Height / 1080);
+                    int size = (int)(data.Mag * bitmap.Height / 216);
                     int alpha = a;
                     if (data.Time < DrawTime)//描画時間より前
                         alpha = (int)((1.0 - (DrawTime - data.Time).TotalSeconds / DisappSpan.TotalSeconds) * a);//消える時間の割合*基本透明度
                     g.FillEllipse(Depth2Color(data.Depth, alpha), (int)((data.Lon - LonSta) * ZoomW) - size / 2, (int)((LatEnd - data.Lat) * ZoomH) - size / 2, size, size);
                     g.DrawEllipse(Pens.Gray, (int)((data.Lon - LonSta) * ZoomW) - size / 2, (int)((LatEnd - data.Lat) * ZoomH) - size / 2, size, size);
+                    if(!(data.MaxInt=="震度１"|| data.MaxInt == "震度２"))
+                    Text += $" {data.HypoName.PadRight(10, '　')}　最大{data.MaxInt.PadRight(4, '　')}　M{data.Mag:F1}　{data.Depth:d3}km\n";
                 }
-                g.DrawString(DrawTime.ToString("yyyy/MM/dd HH:mm:ss"), new Font("Roboto", 100), Brushes.Black, 0, 0);
-                bitmap.Save($"output\\{SaveDire}\\{string.Format("{0:D4}", i)}.png", ImageFormat.Png);
+                g.FillRectangle(new SolidBrush(Color.FromArgb(30, 60, 90)), MapWidth, 0, bitmap.Width - MapWidth, bitmap.Height);
+                g.DrawString(Text, new Font("Koruri Regular", bitmap.Height / 36, GraphicsUnit.Pixel), Brushes.White, MapWidth, 0);
+                g.DrawString(DrawTime.ToString("yyyy/MM/dd HH:mm:ss"), new Font("Koruri Regular", (int)(bitmap.Height / 13.5), GraphicsUnit.Pixel), Brushes.White, MapWidth, MapHeight - (int)(bitmap.Height / 10.8));
+                bitmap.Save($"output\\{SaveDire}\\{i:d4}.png", ImageFormat.Png);
                 g.Dispose();
-                Console.WriteLine($"{DrawTime.ToString("yyyy/MM/dd HH:mm:ss")}({string.Format("{0:D4}", i)}.png):{dataList_Draw.Count}");
+                bitmap.Dispose();
+                Console.WriteLine($"{DrawTime:yyyy/MM/dd HH:mm:ss} {i:d4}.png : {dataList_Draw.Count}");
                 DrawTime += DrawSpan;
             }
             Console.WriteLine("画像作成終了");
             Console.WriteLine($"動画化: ffmpeg -framerate 30 -i %04d.png -vcodec libx264 -pix_fmt yuv420p -r 30 _output.mp4");
+        }
+        public static Color HSL2RGB(double h, double s, double l, int alpha = 255)
+        {
+            double r, g, b;
+            if (s == 0)
+                r = g = b = l;
+            else
+            {
+                double q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+                double p = 2 * l - q;
+                r = Hue2RGB(p, q, h + 1.0 / 3.0);
+                g = Hue2RGB(p, q, h);
+                b = Hue2RGB(p, q, h - 1.0 / 3.0);
+            }
+            return Color.FromArgb(alpha, (int)(r * 255), (int)(g * 255), (int)(b * 255));
+        }
+
+        private static double Hue2RGB(double p, double q, double t)
+        {
+            if (t < 0)
+                t += 1;
+            else if (t > 1)
+                t -= 1;
+            if (t < 1.0 / 6.0)
+                return p + (q - p) * 6 * t;
+            else if (t < 1.0 / 2.0)
+                return q;
+            else if (t < 2.0 / 3.0)
+                return p + (q - p) * (2.0 / 3.0 - t) * 6;
+            return p;
         }
     }
     public class Data
