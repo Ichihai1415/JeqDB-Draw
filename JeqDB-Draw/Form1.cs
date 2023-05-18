@@ -38,7 +38,7 @@ namespace JeqDB_Draw
         double ZoomW;
         double ZoomH;
         readonly int a = 204;
-        readonly string SaveDire = "7";
+        readonly string SaveDire = "10";
 
         private void Form1_Load(object sender, EventArgs e)
         {
@@ -77,100 +77,13 @@ namespace JeqDB_Draw
                 int size = (int)(data.Mag * MapHeight / 216);
                 size *= 3;//拡大時仮
                 g.FillEllipse(Depth2Color(data.Depth), (int)((data.Lon - LonSta) * ZoomW) - size / 2, (int)((LatEnd - data.Lat) * ZoomH) - size / 2, size, size);
-                g.DrawEllipse(Pens.Gray, (int)((data.Lon - LonSta) * ZoomW) - size / 2, (int)((LatEnd - data.Lat) * ZoomH) - size / 2, size, size);
+                g.DrawEllipse(new Pen(Color.FromArgb(a, 127, 127, 127), MapHeight / 540f), (int)((data.Lon - LonSta) * ZoomW) - size / 2, (int)((LatEnd - data.Lat) * ZoomH) - size / 2, size, size);
             }
             MapImg.BackgroundImage = bitmap;
             g.Dispose();
             Console.WriteLine("情報描画終了");
             bitmap.Save("output.png", ImageFormat.Png);
 
-        }
-        private SolidBrush Depth2Color(int Depth, int alpha = 255)
-        {
-            /*
-            int r, g, b;
-            if (Depth <= 10)
-            {
-                r = Depth * 12 + 130;
-                g = 0;
-                b = 0;
-            }
-            else if (Depth <= 20)
-            {
-                r = 255;
-                g = (int)((Depth - 10) * 12.5);
-                b = 0;
-            }
-            else if (Depth <= 30)
-            {
-                r = 255;
-                g = (int)((Depth - 10) * 12.5);
-                b = 0;
-            }
-            else if (Depth <= 50)
-            {
-                r = 255;
-                g = 255;
-                b = 0;
-            }
-            else if (Depth <= 100)
-            {
-                r = 255 - (Depth - 50) * 5;
-                g = (int)(255 - (Depth - 50) * 2.5);
-                b = 0;
-            }
-            else if (Depth <= 200)
-            {
-                r = 7 + (Depth - 100) / 4;
-                g = 130 + (Depth - 100) / 10;
-                b = (int)((Depth - 100) * 2.5);
-            }
-            else if (Depth <= 700)
-            {
-                r = 31 - (Depth - 200) / 16;
-                g = 140 - (Depth - 200) / 4;
-                b = 255 - (Depth - 200) / 4;
-            }
-            else
-            {
-                r = 0;
-                g = 0;
-                b = 0;
-            }
-            return new SolidBrush(Color.FromArgb(alpha, r, g, b));
-            */
-            //震度データベースjsより
-            double l = 50;
-            double h = 0;
-            if (Depth <= 10)
-                l = 50 - 25 * ((10 - Depth) / 10);
-            else if (Depth <= 20)
-                h = 0 + 30 * ((Depth - 10) / 10);
-            else if (Depth <= 30)
-                h = 30 + 30 * ((Depth - 20) / 10);
-            else if (Depth <= 50)
-                h = 60;
-            else if (Depth <= 100)
-            {
-                h = 60 + 60 * ((Depth - 50) / 50);
-                l = 50 + 25 * ((50 - Depth) / 100);
-            }
-            else if (Depth <= 200)
-            {
-                h = 120 + 90 * ((Depth - 100) / 100);
-                l = 25 - 30 * ((100 - Depth) / 100);
-            }
-            else if (Depth <= 700)
-            {
-                h = 210 + 30 * ((Depth - 200) / 500);
-                l = 55 + 30 * ((200 - Depth) / 500);
-            }
-            else
-            {
-                h = 240;
-                l = 25;
-            }
-            return new SolidBrush(HSL2RGB(h / 255, 1, l / 100, alpha));
         }
         private void ConvertData()
         {
@@ -259,7 +172,7 @@ namespace JeqDB_Draw
                 }
             }
             g.FillPath(new SolidBrush(Color.FromArgb(90, 90, 120)), Maps);
-            g.DrawPath(new Pen(Color.FromArgb(255, 255, 255), 1), Maps);
+            g.DrawPath(new Pen(Color.FromArgb(255, 255, 255), (int)(MapHeight / 1080d)), Maps);
             g.FillRectangle(new SolidBrush(Color.FromArgb(30, 60, 90)), MapWidth, 0, BaseMap.Width - MapWidth, BaseMap.Height);
             g.Dispose();
             MapImg.BackgroundImage = BaseMap;
@@ -281,10 +194,11 @@ namespace JeqDB_Draw
                 Directory.CreateDirectory("output");
             if (!Directory.Exists($"output\\{SaveDire}"))
                 Directory.CreateDirectory($"output\\{SaveDire}");
-            DateTime DrawStartDate = new DateTime(2022, 1, 1);//描画開始
+            DateTime DrawStartDate = new DateTime(1919, 1, 1);//描画開始
             DateTime DrawEndDate = new DateTime(2023, 1, 1);//描画終了
-            TimeSpan DrawSpan = new TimeSpan(6, 0, 0);//tごとに描画
-            TimeSpan DisappSpan = new TimeSpan(24, 0, 0);//消える時間
+            //TimeSpan DrawSpan = new TimeSpan(6, 0, 0);//tごとに描画
+            //TimeSpan DisappSpan = new TimeSpan(24, 0, 0);//消える時間
+
 
             //DrawStartDate = new DateTime(2023, 5, 5, 14, 30, 0);
             //DrawEndDate = new DateTime(2023, 5, 5, 15, 30, 0);
@@ -294,9 +208,9 @@ namespace JeqDB_Draw
 
             //能登
             //DrawStartDate = new DateTime(2023, 5, 5, 14, 0, 0);
-            //DrawEndDate = new DateTime(2023, 5, 6, 2, 0, 0);
-            //DrawSpan = new TimeSpan(0, 1, 0);
-            //DisappSpan = new TimeSpan(0, 15, 0);
+            //DrawEndDate = new DateTime(2023, 5, 12, 15, 0, 0);
+            //DrawSpan = new TimeSpan(0, 6, 0);
+            //DisappSpan = new TimeSpan(0, 30, 0);
 
             //
             //        | DisappSpan|  DrawSpan   |
@@ -306,6 +220,7 @@ namespace JeqDB_Draw
             //
             DateTime DrawTime = DrawStartDate;//描画対象時間
             Console.WriteLine("画像作成開始");
+            /*
             for (int i = 1; DrawTime < DrawEndDate; i++)//DateTime:古<新==true
             {
                 List<Data> dataList_Draw = new List<Data>();
@@ -343,25 +258,158 @@ namespace JeqDB_Draw
                 Console.WriteLine($"{DrawTime:yyyy/MM/dd HH:mm:ss} {i:d4}.png : {dataList_Draw.Count}");
                 DrawTime += DrawSpan;
             }
+            */
+
+            for (int i = 1; DrawTime < DrawEndDate; i++)//DateTime:古<新==true
+            {
+                List<Data> dataList_Draw = new List<Data>();
+                List<Data> dataList_Copy = new List<Data>(dataList_);
+                foreach (Data data in dataList_Copy)
+                {
+                    if (data.Time < DrawTime.AddMonths(-24))//描画終了
+                        dataList_.RemoveAt(0);
+                    else if (data.Time < DrawTime.AddMonths(1))//描画
+                        dataList_Draw.Add(data);
+                    else//未描画
+                        break;
+                }
+                Bitmap bitmap = (Bitmap)BaseMap.Clone();
+                Graphics g = Graphics.FromImage(bitmap);
+                string Text = "";
+                foreach (Data data in dataList_Draw)
+                {
+                    int size = (int)(data.Mag * data.Mag * bitmap.Height / 1080);
+                    //int size = (int)(data.Mag * bitmap.Height / 216);
+                    int alpha = a;
+                    if (data.Time < DrawTime)//描画時間より前
+                        alpha = (int)((data.Time - DrawTime.AddMonths(-24)).TotalDays / 730d * a);//消える時間の割合*基本透明度
+                    g.FillEllipse(Depth2Color(data.Depth, alpha), (int)((data.Lon - LonSta) * ZoomW) - size / 2, (int)((LatEnd - data.Lat) * ZoomH) - size / 2, size, size);
+                    g.DrawEllipse(new Pen(Color.FromArgb(alpha, 127, 127, 127), MapHeight / 540f), (int)((data.Lon - LonSta) * ZoomW) - size / 2, (int)((LatEnd - data.Lat) * ZoomH) - size / 2, size, size);
+                    if (data.MaxInt.Contains("７") || data.MaxInt.Contains("６") || data.MaxInt == "震度７")
+                        Text += $" {data.HypoName.PadRight(10, '　')}　最大{data.MaxInt.PadRight(4, '　')}　M{data.Mag:F1}　{data.Depth:d3}km\n";
+                }
+                g.FillRectangle(new SolidBrush(Color.FromArgb(30, 60, 90)), MapWidth, 0, bitmap.Width - MapWidth, bitmap.Height);
+                g.DrawString(Text, new Font("Koruri Regular", bitmap.Height / 36, GraphicsUnit.Pixel), Brushes.White, MapWidth, 0);
+                g.DrawString(DrawTime.ToString("yyyy/MM/dd HH:mm:ss"), new Font("Koruri Regular", (int)(bitmap.Height / 13.5), GraphicsUnit.Pixel), Brushes.White, MapWidth, MapHeight - (int)(bitmap.Height / 10.8));
+                bitmap.Save($"output\\{SaveDire}\\{i:d4}.png", ImageFormat.Png);
+                g.Dispose();
+                bitmap.Dispose();
+                Console.WriteLine($"{DrawTime:yyyy/MM/dd HH:mm:ss} {i:d4}.png : {dataList_Draw.Count}");
+                DrawTime = DrawTime.AddMonths(1);
+            }
+
             Console.WriteLine("画像作成終了");
             Console.WriteLine($"動画化: ffmpeg -framerate 30 -i %04d.png -vcodec libx264 -pix_fmt yuv420p -r 30 _output.mp4");
         }
-        public static Color HSL2RGB(double h, double s, double l, int alpha = 255)
+        private SolidBrush Depth2Color(int Depth, int alpha = 204)
         {
+            /*
+            int r, g, b;
+            if (Depth <= 10)
+            {
+                r = Depth * 12 + 130;
+                g = 0;
+                b = 0;
+            }
+            else if (Depth <= 20)
+            {
+                r = 255;
+                g = (int)((Depth - 10) * 12.5);
+                b = 0;
+            }
+            else if (Depth <= 30)
+            {
+                r = 255;
+                g = (int)((Depth - 10) * 12.5);
+                b = 0;
+            }
+            else if (Depth <= 50)
+            {
+                r = 255;
+                g = 255;
+                b = 0;
+            }
+            else if (Depth <= 100)
+            {
+                r = 255 - (Depth - 50) * 5;
+                g = (int)(255 - (Depth - 50) * 2.5);
+                b = 0;
+            }
+            else if (Depth <= 200)
+            {
+                r = 7 + (Depth - 100) / 4;
+                g = 130 + (Depth - 100) / 10;
+                b = (int)((Depth - 100) * 2.5);
+            }
+            else if (Depth <= 700)
+            {
+                r = 31 - (Depth - 200) / 16;
+                g = 140 - (Depth - 200) / 4;
+                b = 255 - (Depth - 200) / 4;
+            }
+            else
+            {
+                r = 0;
+                g = 0;
+                b = 0;
+            }
+            return new SolidBrush(Color.FromArgb(alpha, r, g, b));
+            //*/
+            //震度データベースjsより
+
+            double l = 50;
+            double h = 0;
+            if (Depth <= 10)
+                l = 50 - 25d * ((10 - Depth) / 10d);
+            else if (Depth <= 20)
+                h = 30d * ((Depth - 10) / 10d);
+            else if (Depth <= 30)
+                h = 30d + 30d * ((Depth - 20) / 10d);
+            else if (Depth <= 50)
+                h = 60;
+            else if (Depth <= 100)
+            {
+                h = 60 + 60d * ((Depth - 50) / 50d);
+                l = 50 + 25d * ((50 - Depth) / 100d);
+            }
+            else if (Depth <= 200)
+            {
+                h = 120 + 90d * ((Depth - 100) / 100d);
+                l = 25 - 30d * ((100 - Depth) / 100d);
+            }
+            else if (Depth <= 700)
+            {
+                h = 210 + 30d * ((Depth - 200) / 500d);
+                l = 55 + 30d * ((200 - Depth) / 500d);
+            }
+            else
+            {
+                h = 240;
+                l = 25;
+            }
+            return new SolidBrush(HSL2RGB((int)h, 100, (int)l, alpha));
+            //*/
+        }
+
+        public static Color HSL2RGB(int hue, int saturation, int lightness, int alpha = 255)
+        {
+            double h = hue / 360.0;
+            double s = saturation / 100.0;
+            double l = lightness / 100.0;
             double r, g, b;
             if (s == 0)
                 r = g = b = l;
             else
             {
-                double q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+                double q = l < 0.5 ? l * (1.0 + s) : l + s - l * s;
                 double p = 2 * l - q;
                 r = Hue2RGB(p, q, h + 1.0 / 3.0);
                 g = Hue2RGB(p, q, h);
                 b = Hue2RGB(p, q, h - 1.0 / 3.0);
             }
-            return Color.FromArgb(alpha, (int)(r * 255), (int)(g * 255), (int)(b * 255));
-        }
 
+            return Color.FromArgb(alpha, (int)(255 * r), (int)(255 * g), (int)(255 * b));
+        }
         private static double Hue2RGB(double p, double q, double t)
         {
             if (t < 0)
